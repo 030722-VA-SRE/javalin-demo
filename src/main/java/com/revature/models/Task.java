@@ -4,22 +4,25 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 public class Task {
-	
+
 	private int id;
 	private String name;
 	private boolean isCompleted;
+	public static int counter;
 
 	public Task() {
 		super();
 		// TODO Auto-generated constructor stub
+		id = counter;
+		counter++;
 	}
-	
-	public Task(int id, String name, boolean isCompleted) {
-		super();
-		this.id = id;
+
+	public Task(String name, boolean isCompleted) {
+		this();
 		this.name = name;
 		this.isCompleted = isCompleted;
 	}
+
 
 	public int getId() {
 		return id;
@@ -66,5 +69,5 @@ public class Task {
 		Task other = (Task) obj;
 		return id == other.id && isCompleted == other.isCompleted && Objects.equals(name, other.name);
 	}
-	
+
 }
