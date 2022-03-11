@@ -7,7 +7,6 @@ public class Task {
 	
 	private int id;
 	private String name;
-	private LocalDate dueDate;
 	private boolean isCompleted;
 
 	public Task() {
@@ -15,11 +14,10 @@ public class Task {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public Task(int id, String name, LocalDate dueDate, boolean isCompleted) {
+	public Task(int id, String name, boolean isCompleted) {
 		super();
 		this.id = id;
 		this.name = name;
-		this.dueDate = dueDate;
 		this.isCompleted = isCompleted;
 	}
 
@@ -39,14 +37,6 @@ public class Task {
 		this.name = name;
 	}
 
-	public LocalDate getDueDate() {
-		return dueDate;
-	}
-
-	public void setDueDate(LocalDate dueDate) {
-		this.dueDate = dueDate;
-	}
-
 	public boolean isCompleted() {
 		return isCompleted;
 	}
@@ -57,17 +47,14 @@ public class Task {
 
 	@Override
 	public String toString() {
-		return "Task [id=" + id + ", name=" + name + ", dueDate=" + dueDate + ", isCompleted=" + isCompleted + "]";
+		return "Task [id=" + id + ", name=" + name + ", isCompleted=" + isCompleted + "]";
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(dueDate, id, isCompleted, name);
+		return Objects.hash(id, isCompleted, name);
 	}
 
-	/*- 
-	 * Override equals to be able to compare objects, otherwise it will compare the memory address for those objects
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -77,8 +64,7 @@ public class Task {
 		if (getClass() != obj.getClass())
 			return false;
 		Task other = (Task) obj;
-		return Objects.equals(dueDate, other.dueDate) && id == other.id && isCompleted == other.isCompleted
-				&& Objects.equals(name, other.name);
+		return id == other.id && isCompleted == other.isCompleted && Objects.equals(name, other.name);
 	}
 	
 }
