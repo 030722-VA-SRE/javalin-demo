@@ -1,11 +1,12 @@
 package com.revature;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 
 import org.eclipse.jetty.http.HttpStatus;
 
 import com.revature.models.Task;
+import com.revature.persitence.TaskDao;
+import com.revature.persitence.TaskPostgres;
 
 import io.javalin.Javalin;
 
@@ -47,28 +48,18 @@ public class Driver {
 	}
 
 	public static void basicTaskApp() {
-		ArrayList<Task> tasks = new ArrayList<>();
+		TaskDao taskDao = new TaskPostgres();
 		
 		/*-
 		 * All in one application setup, here we are using an ArrayList to mimic the idea of persistence.
 		 * 	- Tasks added via the API will be added to the ArrayList
 		 * 	- Tasks can then be retrieved by iterating through the ArrayList to retrieve/modify the desired tasks 
 		 */
-		// creating 5 tasks
-		for(int i = 0; i < 5; i++){
-			Task t = new Task();
-			t.setId(Task.taskCounter);
-			t.setName("Task number: " + Task.taskCounter);
-			t.setDueDate(LocalDate.now().plusDays(Task.taskCounter));
-			tasks.add(t);
-		}
 		
 		Javalin app = Javalin.create().start(8080);
 		
 		app.get("tasks", (ctx) -> {
-			ctx.json(tasks);
-			ctx.queryParam("completed");
-			ctx.queryParam("dueDate");
+			ctx.json(taskDao.getTasks());
 		});
 		
 		
@@ -82,17 +73,7 @@ public class Driver {
 			String pathParamId = ctx.pathParam("id");
 			int taskId = Integer.parseInt(pathParamId);
 			
-			/*-
-			 * once the id has been retrieved, we can iterate through the arraylist to retrieve the relevant item
-			 * 		- note: the id of the task and the index might not be the same if elements are deleted!
-			 */
-			Task t = null;
-			for(Task task :tasks) {
-				if(task.getId() == taskId) {
-					t = task;
-					break;
-				}
-			}
+			Task t = taskDao.getTaskById(taskId);
 			
 			/*-
 			 * now that the arraylist has been searched, we can provide the relevant HttpResponse based on whether the task was found or not
@@ -112,23 +93,15 @@ public class Driver {
 			 * example of some validation:
 			 * 	- if the task name already exists, does not add a new task to the ArrayList
 			 */
-			boolean alreadyExists = false;
-			// iterating tasks of task ArrayList and comparing tasks' names with the new task, if they match set already exists to true
-			for(Task task : tasks) {
-				if(newTask.getName().equals(task.getName())) {
-					alreadyExists = true;
-					break;
-				}
-			}
+			int generatedId = taskDao.addTask(newTask);
 			/*-
 			 * if the task already exists, returns status code 400 with a message about why
 			 * else if the task doesn't exist, add the task to the arraylist and set the status code to 201 
 			 */
-			if(alreadyExists) {
+			if(generatedId == -1) {
 				ctx.status(400);
 				ctx.result("Task of name '" + newTask.getName() + "' already exists.");
 			}else {
-				tasks.add(newTask);
 				ctx.status(HttpStatus.CREATED_201);
 			}
 		});
@@ -142,14 +115,12 @@ public class Driver {
 			 *  set a default response to be overriden if a task is deleted
 			 *  	- ie: if no tasks of that id is found in the arrayList no task is deleted
 			 */
-			ctx.status(404);
 			
-			for(int i = 0; i < tasks.size(); i++) {
-				if(tasks.get(i).getId() == taskId) {
-					// if a task of that id is found, remove task from the arrayList and set status to success
-					tasks.remove(i);
-					ctx.status(200);
-				}
+			boolean deletedTask = taskDao.deleteTask(taskId);
+			if(deletedTask) {
+				ctx.status(200);
+			} else {
+				ctx.status(404);
 			}
 		});
 	}
