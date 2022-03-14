@@ -3,26 +3,25 @@ package com.revature.models;
 import java.time.LocalDate;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 public class Task {
 
 	private int id;
 	private String name;
+	/*-
+	 * LocalDate object can be serialized to a JSON string by using the following annotation and the
+	 * jackson-datatype-jsr310 dependency.
+	 */
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "MM-dd-yyyy")
+	private LocalDate dueDate;
 	private boolean isCompleted;
-	public static int counter;
-
+	public static int taskCounter = 0;
+	
 	public Task() {
 		super();
-		// TODO Auto-generated constructor stub
-		id = counter;
-		counter++;
+		taskCounter++;
 	}
-
-	public Task(String name, boolean isCompleted) {
-		this();
-		this.name = name;
-		this.isCompleted = isCompleted;
-	}
-
 
 	public int getId() {
 		return id;
@@ -40,6 +39,14 @@ public class Task {
 		this.name = name;
 	}
 
+	public LocalDate getDueDate() {
+		return dueDate;
+	}
+
+	public void setDueDate(LocalDate dueDate) {
+		this.dueDate = dueDate;
+	}
+
 	public boolean isCompleted() {
 		return isCompleted;
 	}
@@ -49,13 +56,8 @@ public class Task {
 	}
 
 	@Override
-	public String toString() {
-		return "Task [id=" + id + ", name=" + name + ", isCompleted=" + isCompleted + "]";
-	}
-
-	@Override
 	public int hashCode() {
-		return Objects.hash(id, isCompleted, name);
+		return Objects.hash(dueDate, id, isCompleted, name);
 	}
 
 	@Override
@@ -67,7 +69,13 @@ public class Task {
 		if (getClass() != obj.getClass())
 			return false;
 		Task other = (Task) obj;
-		return id == other.id && isCompleted == other.isCompleted && Objects.equals(name, other.name);
+		return Objects.equals(dueDate, other.dueDate) && id == other.id && isCompleted == other.isCompleted
+				&& Objects.equals(name, other.name);
+	}
+
+	@Override
+	public String toString() {
+		return "Task [id=" + id + ", name=" + name + ", dueDate=" + dueDate + ", isCompleted=" + isCompleted + "]";
 	}
 
 }

@@ -1,7 +1,7 @@
 package com.revature;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.eclipse.jetty.http.HttpStatus;
 
@@ -11,100 +11,146 @@ import io.javalin.Javalin;
 
 public class Driver {
 
-	private static List<Task> tasks = new ArrayList<>();;
-	
 	public static void main(String[] args) {
-		Javalin app = Javalin.create( (config) -> {
-			// pass any configuration associated with Javalin
+		basicTaskApp();
+
+	}
+	
+	public static void basicJavalinSetUp() {
+		Javalin app = Javalin.create();
+		app.start(8080);
+		
+		/*-
+		 * Basic endpoint set up returning plain txt
+		 */
+		app.get("hello", (ctx) -> {
+			ctx.result("Hello from Javalin!");
 		});
 		
-		// pass in a value to give a port number, default it's port 8080
-		app.start();
-		
 		/*-
-		 * HTTP Request
-		 * 		- Verb: GET
-		 * 		- URL: hello
-		 * 		- Header:
-		 * 		- Body:
-		 * HTTP Response
-		 * 		- Body: "Hello World!"
+		 * Basic endpoint returning a JSON object
 		 */
-		app.get("hello", (ctx) ->{
-			ctx.status(256);
-			ctx.result("Hello World");
+		app.get("json", (ctx) ->{
+			Task t = new Task();
+			t.setName("Testing Javalin!");
+			t.setDueDate(LocalDate.now());
+			ctx.json(t);
 		});
 		
+		/*-
+		 * Basic endpoint deserializing JSON back to a Java task object
+		 */
+		app.post("json", (ctx) ->{
+			Task t = ctx.bodyAsClass(Task.class);
+			System.out.println(t);
+		});
+	}
+
+	public static void basicTaskApp() {
+		ArrayList<Task> tasks = new ArrayList<>();
 		
 		/*-
-		 * 	As a user, I can view all tasks.
-				GET /tasks
-			As a user, I can add a new task.
-				POST /tasks
-			As a user, I can update a task.
-				PUT /tasks/{id}
-			As a user, I can view task by ID.
-				GET /tasks/{id}
-			As a user, I can delete a task by ID.
-				DELETE /tasks/{id}
+		 * All in one application setup, here we are using an ArrayList to mimic the idea of persistence.
+		 * 	- Tasks added via the API will be added to the ArrayList
+		 * 	- Tasks can then be retrieved by iterating through the ArrayList to retrieve/modify the desired tasks 
 		 */
+		// creating 5 tasks
+		for(int i = 0; i < 5; i++){
+			Task t = new Task();
+			t.setId(Task.taskCounter);
+			t.setName("Task number: " + Task.taskCounter);
+			t.setDueDate(LocalDate.now().plusDays(Task.taskCounter));
+			tasks.add(t);
+		}
 		
-		Task t1 = new Task("My First Task!", false);
-		Task t2 = new Task("My Second Task!", true);
-		Task t3 = new Task("My Third Task!", false);
-		
-		tasks.add(t1);
-		tasks.add(t2);
-		tasks.add(t3);
-		
-		/*-
-		 * GET /tasks
-		 * 		- returns the all tasks
-		 */
+		Javalin app = Javalin.create().start(8080);
 		
 		app.get("tasks", (ctx) -> {
 			ctx.json(tasks);
+			ctx.queryParam("completed");
+			ctx.queryParam("dueDate");
 		});
 		
+		
 		app.get("tasks/{id}", (ctx) -> {
-			// extracts the id from the path param in the url, and converts it to an int
-			int id = Integer.parseInt(ctx.pathParam("id"));
+			/*-
+			 *  here the id value requested is passed via a path param where {id} represents the value, ie:
+			 *  	- localhost:8080/tasks/2
+			 *  	- localhost:8080/tasks/5
+			 *  we are retrieving this value as a string using the ctx object which we are then converting to an int for manipulation
+			 */
+			String pathParamId = ctx.pathParam("id");
+			int taskId = Integer.parseInt(pathParamId);
 			
-			Task task = null;
-			
-			// iterate over tasks arraylist, to retrieve the task of that id
-			for(int i = 0; i < tasks.size(); i++) {
-				// tasks = ArrayList<Task>
-				if(tasks.get(i).getId() == id) {
-					task = tasks.get(i);
+			/*-
+			 * once the id has been retrieved, we can iterate through the arraylist to retrieve the relevant item
+			 * 		- note: the id of the task and the index might not be the same if elements are deleted!
+			 */
+			Task t = null;
+			for(Task task :tasks) {
+				if(task.getId() == taskId) {
+					t = task;
+					break;
 				}
 			}
 			
-			// if the loop finds a task of that id, returns that task else, sends 404
-			if(task == null) {
+			/*-
+			 * now that the arraylist has been searched, we can provide the relevant HttpResponse based on whether the task was found or not
+			 */
+			
+			if(t == null) {
 				ctx.status(404);
 			} else {
-				ctx.json(task);
+				ctx.json(t);
 			}
-			
-		});
-		/*-
-		 * POST /tasks
-		 * 		- HTTP request
-		 * 			- Body
-		 * 				- Task Object (JSON
-		 * 		- add an object
-		 */
-		app.post("tasks", (ctx) ->{
-			Task t =ctx.bodyAsClass(Task.class);
-			// behavior to persist the object
-			tasks.add(t);
-			ctx.status(HttpStatus.CREATED_201);
 		});
 		
-		/*
-		 * Update
-		 * Remove
-		 */
+		app.post("tasks", (ctx) ->{
+			Task newTask = ctx.bodyAsClass(Task.class);
+			
+			/*-
+			 * example of some validation:
+			 * 	- if the task name already exists, does not add a new task to the ArrayList
+			 */
+			boolean alreadyExists = false;
+			// iterating tasks of task ArrayList and comparing tasks' names with the new task, if they match set already exists to true
+			for(Task task : tasks) {
+				if(newTask.getName().equals(task.getName())) {
+					alreadyExists = true;
+					break;
+				}
+			}
+			/*-
+			 * if the task already exists, returns status code 400 with a message about why
+			 * else if the task doesn't exist, add the task to the arraylist and set the status code to 201 
+			 */
+			if(alreadyExists) {
+				ctx.status(400);
+				ctx.result("Task of name '" + newTask.getName() + "' already exists.");
+			}else {
+				tasks.add(newTask);
+				ctx.status(HttpStatus.CREATED_201);
+			}
+		});
+		
+		app.delete("tasks/{id}", (ctx) ->{
+			// retrieving id from the path param and converting to an int
+			String pathParamId = ctx.pathParam("id");
+			int taskId = Integer.parseInt(pathParamId);
+			
+			/*-
+			 *  set a default response to be overriden if a task is deleted
+			 *  	- ie: if no tasks of that id is found in the arrayList no task is deleted
+			 */
+			ctx.status(404);
+			
+			for(int i = 0; i < tasks.size(); i++) {
+				if(tasks.get(i).getId() == taskId) {
+					// if a task of that id is found, remove task from the arrayList and set status to success
+					tasks.remove(i);
+					ctx.status(200);
+				}
+			}
+		});
 	}
 }
