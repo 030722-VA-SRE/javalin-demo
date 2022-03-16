@@ -16,11 +16,9 @@ public class Task {
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "MM-dd-yyyy")
 	private LocalDate dueDate;
 	private boolean isCompleted;
-	public static int taskCounter = 0;
 	
 	public Task() {
 		super();
-		taskCounter++;
 	}
 
 	public int getId() {

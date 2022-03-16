@@ -1,12 +1,12 @@
-package com.revature.persitence;
+package com.revature.persistence;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-
-import org.eclipse.jetty.http.HttpStatus;
+import java.util.List;
 
 import com.revature.models.Task;
 
+@Deprecated
 public class TaskArrayList implements TaskDao{
 
 	/*
@@ -20,13 +20,13 @@ public class TaskArrayList implements TaskDao{
 
 	public TaskArrayList() {
 		super();
-		for (int i = 0; i < 5; i++) {
-			Task t = new Task();
-			t.setId(Task.taskCounter);
-			t.setName("Task number: " + Task.taskCounter);
-			t.setDueDate(LocalDate.now().plusDays(Task.taskCounter));
-			tasks.add(t);
-		}
+//		for (int i = 0; i < 5; i++) {
+//			Task t = new Task();
+//			t.setId(Task.taskCounter);
+//			t.setName("Task number: " + Task.taskCounter);
+//			t.setDueDate(LocalDate.now().plusDays(Task.taskCounter));
+//			tasks.add(t);
+//		}
 	}
 
 	// used by GET - /tasks/{id}
@@ -60,9 +60,10 @@ public class TaskArrayList implements TaskDao{
 			return -1;
 			// this would be an id that doesn't exist to indicate that the operation failed
 		}else {
-			newTask.setId(Task.taskCounter);
+//			newTask.setId(Task.taskCounter);
 			tasks.add(newTask);
-			return Task.taskCounter;
+//			return Task.taskCounter;
+			return 0;
 			// return the generated id
 		}
 	}
@@ -77,5 +78,35 @@ public class TaskArrayList implements TaskDao{
 				}
 		}
 		return deletedSomething;
+	}
+
+	@Override
+	public List<Task> getAllTasks() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Task> getTasksByCompletion(boolean isCompleted) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int createTask(Task task) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public boolean updateTask(Task task) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean deleteTaskById(int id) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }
