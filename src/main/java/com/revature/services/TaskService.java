@@ -1,7 +1,9 @@
 package com.revature.services;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import com.revature.exceptions.TaskNotFoundException;
 import com.revature.models.Task;
 import com.revature.persistence.TaskDao;
 import com.revature.persistence.TaskPostgres;
@@ -16,8 +18,6 @@ public class TaskService {
 	}
 	
 	public List<Task> getAllTasks(){
-		
-		// additional business logic if needed
 		return td.getAllTasks();
 	}
 	
@@ -25,7 +25,19 @@ public class TaskService {
 		return td.getTasksByCompletion(isCompleted);
 	}
 	
-	public Task getTaskById(int id) {
+	public List<Task> getTasksByDueDate(LocalDate dueDate){
+		return td.getTasksByDueDate(dueDate);
+	}
+	
+	public List<Task> getTasksByCompletionAndDueDate(boolean isCompleted, LocalDate dueDate){
+		return td.getTasksByCompletionAndDueDate(isCompleted, dueDate);
+	}
+	
+	public Task getTaskById(int id) throws TaskNotFoundException {
+		Task task = td.getTaskById(id);
+		if(task == null) {
+			throw new TaskNotFoundException();
+		}
 		return td.getTaskById(id);
 	}
 	
@@ -37,11 +49,13 @@ public class TaskService {
 		return false;
 	}
 	
+	// TODO: implement updateTask
 	public boolean updateTask(Task task) {
-		return td.updateTask(task);
+		return false;
 	}
 	
+	// TODO: implement deleteTaskById
 	public boolean deleteTaskById(int id) {
-		return td.deleteTaskById(id);
+		return false;
 	}
 }

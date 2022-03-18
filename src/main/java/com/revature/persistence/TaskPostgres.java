@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,7 +70,7 @@ public class TaskPostgres implements TaskDao {
 	@Override
 	public Task getTaskById(int id) {
 		String sql = "select * from tasks where id = ?;";
-		Task newTask = new Task();
+		Task newTask = null;
 
 		try (Connection c = ConnectionUtil.getConnectionFromEnv()) {
 			PreparedStatement ps = c.prepareStatement(sql);
@@ -95,7 +96,7 @@ public class TaskPostgres implements TaskDao {
 
 	@Override
 	public int createTask(Task task) {
-		String sql = "insert into tasks(description, due_date) values (?,?)returning id;";
+		String sql = "insert into tasks(name, due_date) values (?,?)returning id;";
 		int generatedId = -1;
 
 		try (Connection c = ConnectionUtil.getConnectionFromEnv()) {
@@ -116,51 +117,73 @@ public class TaskPostgres implements TaskDao {
 		return generatedId;
 	}
 
+	// TODO: implement updateTask
 	@Override
 	public boolean updateTask(Task task) {
-		String sql = "update tasks set description = ?, is_completed = ?, due_date = ? where id = ?;";
-		int rowsChanged = -1;
+		return false;
+	}
 
-		try (Connection c = ConnectionUtil.getConnectionFromEnv()) {
-			PreparedStatement ps = c.prepareStatement(sql);
-
-			ps.setString(1, task.getName());
-			ps.setBoolean(2, task.isCompleted());
-			ps.setDate(3, Date.valueOf(task.getDueDate()));
-			ps.setInt(4, task.getId());
-
-			rowsChanged = ps.executeUpdate();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		if (rowsChanged < 1) {
-			return false;
-		}
-
-		return true;
+	// TODO: implement deleteTaskById
+	@Override
+	public boolean deleteTaskById(int id) {
+		return false;
 	}
 
 	@Override
-	public boolean deleteTaskById(int id) {
-		String sql = "delete from tasks where id = ?;";
-		int rowsChanged = -1;
+	public List<Task> getTasksByDueDate(LocalDate dueDate) {
+		String sql = "select * from tasks where due_date = ?;";
+		List<Task> tasks = new ArrayList<>();
 
 		try (Connection c = ConnectionUtil.getConnectionFromEnv()) {
 			PreparedStatement ps = c.prepareStatement(sql);
 
-			ps.setInt(1, id);
+			ps.setDate(1, Date.valueOf(dueDate));
 
-			rowsChanged = ps.executeUpdate();
+			ResultSet rs = ps.executeQuery();
+
+			while (rs.next()) {
+				Task newTask = new Task();
+				newTask.setId(rs.getInt("id"));
+				newTask.setName(rs.getString("name"));
+				newTask.setCompleted(rs.getBoolean("is_completed"));
+				newTask.setDueDate(rs.getDate("due_date").toLocalDate());
+				
+				tasks.add(newTask);
+			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if (rowsChanged < 1) {
-			return false;
-		}
+		return tasks;
+	}
 
-		return true;
+	@Override
+	public List<Task> getTasksByCompletionAndDueDate(boolean isCompleted, LocalDate dueDate) {
+		String sql = "select * from tasks where is_completed = ? and due_date =?;";
+		List<Task> tasks = new ArrayList<>();
+
+		try (Connection c = ConnectionUtil.getConnectionFromEnv()) {
+			PreparedStatement ps = c.prepareStatement(sql);
+
+			ps.setBoolean(1, isCompleted);
+			ps.setDate(2, Date.valueOf(dueDate));
+
+			ResultSet rs = ps.executeQuery();
+
+			while (rs.next()) {
+				Task newTask = new Task();
+				newTask.setId(rs.getInt("id"));
+				newTask.setName(rs.getString("name"));
+				newTask.setCompleted(rs.getBoolean("is_completed"));
+				newTask.setDueDate(rs.getDate("due_date").toLocalDate());
+				
+				tasks.add(newTask);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return tasks;
 	}
 
 }
